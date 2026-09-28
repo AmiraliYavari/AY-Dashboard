@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ay_dashboard
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - ay_dashboard_data:/var/lib/postgresql/data
       # Runs automatically ONLY on the first start (when the volume is empty)
