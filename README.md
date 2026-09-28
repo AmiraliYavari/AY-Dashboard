@@ -1,116 +1,92 @@
 # AY-Dashboard
 
-داشبورد مدیریتی فروش و مالی — **کاملاً TypeScript**
-بک‌اند: Node.js + Express + PostgreSQL (در Docker) | فرانت‌اند: React + Vite
-فونت‌ها: Vazirmatn (متن) و Lalezar (اعداد و عناوین) | آیکون‌ها: Google Material Symbols
+A full-stack sales and finance admin dashboard with a Persian (RTL) interface.
 
-## ساختار پروژه
+**Stack:** React + Vite · Node.js + Express · PostgreSQL (Docker) · TypeScript throughout
 
-```
-AY-Dashboard/
-├── docker-compose.yml       # دیتابیس PostgreSQL در داکر
-├── backend/                 # API (TypeScript)
-│   ├── src/
-│   │   ├── server.ts
-│   │   ├── config/db.ts
-│   │   ├── middleware/
-│   │   ├── controllers/
-│   │   ├── routes/
-│   │   ├── types/
-│   │   └── utils/jwt.ts
-│   ├── db/
-│   │   ├── schema.sql       # ساختار جداول (در اولین اجرای داکر خودکار اعمال می‌شود)
-│   │   └── seed.ts          # داده‌های نمونه
-│   ├── tsconfig.json
-│   └── package.json
-└── frontend/                # React + Vite (TypeScript)
-    ├── src/
-    │   ├── main.tsx / App.tsx
-    │   ├── api.ts
-    │   ├── types/
-    │   ├── context/AuthContext.tsx
-    │   ├── components/
-    │   ├── pages/           # Login, Dashboard, Invoices, Customers
-    │   ├── utils/
-    │   └── styles/style.css
-    ├── tsconfig.json
-    └── package.json
-```
+## Features
 
-## پیش‌نیازها
+- JWT authentication
+- Financial overview: revenue, expenses, net profit, outstanding invoices
+- Revenue trend and income-by-category charts
+- Invoice management with status filters
+- Customer management (create, edit, delete, search)
 
-- Node.js 18 یا بالاتر
-- Docker Desktop (برای دیتابیس)
+## Prerequisites
 
-## راه‌اندازی (مرحله‌به‌مرحله، PowerShell / ویندوز)
+- [Node.js](https://nodejs.org/) 18+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-### ۱) بالا آوردن دیتابیس با داکر
+## Getting Started
 
-```powershell
+### 1. Start the database
+
+```bash
 docker compose up -d
 ```
 
-در اولین اجرا، دیتابیس `ay_dashboard` ساخته و جداول (`schema.sql`) خودکار اعمال می‌شوند. وضعیت را می‌توانی با `docker compose ps` ببینی (باید `healthy` شود).
+The `ay_dashboard` database is created and the schema is applied automatically on first start.
 
-### ۲) بک‌اند
-
-```powershell
-cd backend
-copy .env.example .env
-npm install
-npm run seed        # کاربر مدیر + داده‌های نمونه
-npm run dev         # اجرا روی http://localhost:4000
-```
-
-بررسی سلامت: `http://localhost:4000/api/health`
-
-### ۳) فرانت‌اند (ترمینال جدا)
-
-```powershell
-cd frontend
-copy .env.example .env
-npm install
-npm run dev         # اجرا روی http://localhost:5173
-```
-
-**ورود پیش‌فرض:**
-- ایمیل: `admin@ay-dashboard.local`
-- رمز عبور: `admin123`
-
-## دستورات مفید
-
-| کار | دستور |
-|---|---|
-| توقف دیتابیس (داده‌ها می‌مانند) | `docker compose down` |
-| پاک‌کردن کامل دیتابیس و شروع از صفر | `docker compose down -v` |
-| مشاهده لاگ دیتابیس | `docker compose logs -f db` |
-| ورود به psql داخل کانتینر | `docker exec -it ay-dashboard-db psql -U postgres -d ay_dashboard` |
-| بررسی تایپ‌های بک‌اند | `cd backend && npx tsc --noEmit` |
-| build بک‌اند / اجرای نسخه‌ی build | `npm run build` سپس `npm start` |
-| build فرانت‌اند | `cd frontend && npm run build` |
-
-> اگر بعد از تغییر `schema.sql` می‌خواهی دوباره اعمال شود، باید `docker compose down -v` و سپس `docker compose up -d` بزنی (فایل‌های initdb فقط وقتی volume خالی است اجرا می‌شوند).
-
-## نکات فنی
-
-- احراز هویت با JWT؛ رمزها با bcrypt هش می‌شوند.
-- اتصال به دیتابیس با `pg`؛ کوئری‌ها با پارامتر (`$1, $2, ...`) نوشته شده‌اند.
-- مسیرهای محافظت‌شده در فرانت با `ProtectedRoute` (React Router v6).
-- نمودارها با Chart.js از طریق `react-chartjs-2`.
-- تمام رابط راست‌به‌چپ (RTL) است.
-
-## گام‌های بعدی پیشنهادی
-
-- صفحه‌ی مدیریت تراکنش‌ها (فعلاً فقط از طریق seed/دیتابیس)
-- تغییر رمز عبور و ویرایش پروفایل
-- Pagination برای جدول‌ها
-- کنترل دسترسی بر اساس نقش (manager / viewer)
-- Dockerfile برای بک‌اند و فرانت و اضافه‌کردنشان به docker-compose
-
-## گیت
+### 2. Start the backend
 
 ```bash
-git add -A
-git commit -m "AY-Dashboard: TypeScript full stack + Docker PostgreSQL"
-git push origin main
+cd backend
+cp .env.example .env
+npm install
+npm run seed
+npm run dev
 ```
+
+The API runs at `http://localhost:4000` (health check: `/api/health`).
+
+### 3. Start the frontend
+
+In a new terminal:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` and sign in with the seeded admin account:
+
+| Email | Password |
+|---|---|
+| `admin@ay-dashboard.local` | `admin123` |
+
+> Change the default password and set a strong `JWT_SECRET` in `backend/.env` before deploying anywhere.
+
+## Project Structure
+
+```
+AY-Dashboard/
+├── docker-compose.yml     # PostgreSQL service
+├── backend/               # Express API (TypeScript)
+│   ├── src/               # routes, controllers, middleware
+│   └── db/                # schema.sql, seed.ts
+└── frontend/              # React app (TypeScript)
+    └── src/               # pages, components, context
+```
+
+## Useful Commands
+
+| Task | Command |
+|---|---|
+| Stop the database (data is kept) | `docker compose down` |
+| Reset the database completely | `docker compose down -v && docker compose up -d` |
+| Type-check the backend | `cd backend && npx tsc --noEmit` |
+| Build the backend | `cd backend && npm run build` |
+| Build the frontend | `cd frontend && npm run build` |
+
+## API Overview
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/login` | Sign in and receive a JWT |
+| GET | `/api/dashboard/*` | KPIs, trends, recent transactions, top customers |
+| GET/POST/PUT/DELETE | `/api/customers` | Customer CRUD |
+| GET/POST/PATCH/DELETE | `/api/invoices` | Invoice CRUD and status updates |
+
+All endpoints except login require an `Authorization: Bearer <token>` header.
