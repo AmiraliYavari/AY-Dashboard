@@ -1,0 +1,28 @@
+# AY-Dashboard — PostgreSQL database in Docker
+# Start:  docker compose up -d
+# Stop:   docker compose down          (data is kept in the named volume)
+# Reset:  docker compose down -v       (deletes all data, schema is re-applied on next start)
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ay-dashboard-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ay_dashboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - ay_dashboard_data:/var/lib/postgresql/data
+      # Runs automatically ONLY on the first start (when the volume is empty)
+      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ay_dashboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ay_dashboard_data:
