@@ -113,8 +113,9 @@ export default function Invoices() {
           ))}
         </div>
 
-        <div className="card">
-          <table>
+        <div className="card flush">
+          <div className="table-scroll">
+          <table className="table-stack">
             <thead>
               <tr><th>شماره فاکتور</th><th>مشتری</th><th>تاریخ صدور</th><th>سررسید</th><th>مبلغ</th><th>وضعیت</th><th></th></tr>
             </thead>
@@ -125,12 +126,12 @@ export default function Invoices() {
                 <tr><td colSpan={7} className="empty-state">فاکتوری در این وضعیت یافت نشد</td></tr>
               ) : invoices.map((i) => (
                 <tr key={i.id}>
-                  <td>{i.invoice_no}</td>
-                  <td>{i.customer_name}</td>
-                  <td>{formatDate(i.issue_date)}</td>
-                  <td>{formatDate(i.due_date)}</td>
-                  <td>{formatToman(i.amount)}</td>
-                  <td>
+                  <td className="cell-primary"><b>{i.invoice_no}</b></td>
+                  <td data-label="مشتری">{i.customer_name}</td>
+                  <td data-label="تاریخ صدور">{formatDate(i.issue_date)}</td>
+                  <td data-label="سررسید">{formatDate(i.due_date)}</td>
+                  <td data-label="مبلغ" className="amount">{formatToman(i.amount)}</td>
+                  <td data-label="وضعیت">
                     <select
                       className={`badge badge-${i.status}`}
                       value={i.status}
@@ -141,15 +142,16 @@ export default function Invoices() {
                       <option value="overdue">معوق</option>
                     </select>
                   </td>
-                  <td style={{ textAlign: 'left' }}>
-                    <button className="icon-btn" style={{ width: 30, height: 30 }} title="حذف" onClick={() => handleDelete(i.id)}>
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                  <td className="cell-actions">
+                    <button className="icon-btn sm danger" title="حذف" aria-label="حذف فاکتور" onClick={() => handleDelete(i.id)}>
+                      <span className="material-symbols-outlined">delete</span>
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -158,7 +160,7 @@ export default function Invoices() {
           <div className="modal">
             <div className="modal-head">
               <h3>فاکتور جدید</h3>
-              <button className="icon-btn" onClick={() => setModalOpen(false)}>
+              <button className="icon-btn" onClick={() => setModalOpen(false)} aria-label="بستن">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -182,18 +184,20 @@ export default function Invoices() {
                 <input type="number" required min="0" value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               </div>
-              <div className="field">
-                <label>تاریخ صدور</label>
-                <input type="date" required value={form.issue_date}
-                  onChange={(e) => setForm({ ...form, issue_date: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>تاریخ سررسید</label>
-                <input type="date" required value={form.due_date}
-                  onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+              <div className="field-row">
+                <div className="field">
+                  <label>تاریخ صدور</label>
+                  <input type="date" required value={form.issue_date}
+                    onChange={(e) => setForm({ ...form, issue_date: e.target.value })} />
+                </div>
+                <div className="field">
+                  <label>تاریخ سررسید</label>
+                  <input type="date" required value={form.due_date}
+                    onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+                </div>
               </div>
               <div className="modal-actions">
-                <button type="submit" className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}>ثبت فاکتور</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>ثبت فاکتور</button>
                 <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)}>انصراف</button>
               </div>
             </form>

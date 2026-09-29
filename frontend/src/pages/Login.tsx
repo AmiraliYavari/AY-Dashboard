@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 import type { ApiError } from '../types';
 
 export default function Login() {
@@ -27,38 +28,53 @@ export default function Login() {
 
   return (
     <div className="login-wrap">
-      <div className="login-card">
-        <div className="brand-mark" style={{ margin: '0 auto 14px', width: 44, height: 44, fontSize: 22 }}>آ</div>
-        <div className="login-title">AY-Dashboard</div>
-        <div className="login-sub">داشبورد مدیریت فروش و مالی</div>
+      <aside className="login-side">
+        <div className="login-brand">
+          <Logo size={46} />
+          <b>AY-Dashboard</b>
+        </div>
+        <h2 className="login-headline">فروش و مالی کسب‌وکار، در یک نگاه</h2>
+        <ul className="login-points">
+          <li><span className="material-symbols-outlined">check_circle</span> درآمد، هزینه و سود خالص لحظه‌ای</li>
+          <li><span className="material-symbols-outlined">check_circle</span> پیگیری فاکتورها و مطالبات معوق</li>
+          <li><span className="material-symbols-outlined">check_circle</span> مدیریت مشتریان و تراکنش‌ها</li>
+        </ul>
+      </aside>
 
-        {error && <div className="login-error">{error}</div>}
+      <main className="login-main">
+        <div className="login-card">
+          <div className="login-mobile-logo"><Logo size={48} /></div>
+          <h1 className="login-title">ورود به داشبورد</h1>
+          <div className="login-sub">برای ادامه وارد حساب خود شوید</div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="field">
-            <label htmlFor="email">ایمیل</label>
-            <input
-              id="email" type="email" required autoComplete="username"
-              placeholder="admin@ay-dashboard.local"
-              value={email} onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="password">رمز عبور</label>
-            <input
-              id="password" type="password" required autoComplete="current-password"
-              placeholder="••••••••"
-              value={password} onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', justifyContent: 'center' }}>
-            <span className="material-symbols-outlined">login</span>
-            {loading ? 'در حال ورود...' : 'ورود به داشبورد'}
-          </button>
-        </form>
+          {error && <div className="login-error" role="alert">{error}</div>}
 
-        <div className="login-hint">نمونه ورود پیش‌فرض: admin@ay-dashboard.local / admin123</div>
-      </div>
+          <form onSubmit={handleSubmit}>
+            <div className="field">
+              <label htmlFor="email">ایمیل</label>
+              <input
+                id="email" type="email" required autoComplete="username" dir="ltr"
+                placeholder="admin@ay-dashboard.local"
+                value={email} onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="password">رمز عبور</label>
+              <input
+                id="password" type="password" required autoComplete="current-password" dir="ltr"
+                placeholder="••••••••"
+                value={password} onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', height: 44 }}>
+              <span className="material-symbols-outlined">login</span>
+              {loading ? 'در حال ورود...' : 'ورود'}
+            </button>
+          </form>
+
+          <div className="login-hint">admin@ay-dashboard.local / admin123</div>
+        </div>
+      </main>
     </div>
   );
 }

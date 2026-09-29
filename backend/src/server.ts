@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import customersRoutes from './routes/customers.routes';
 import invoicesRoutes from './routes/invoices.routes';
+import transactionsRoutes from './routes/transactions.routes';
 import { notFound, errorHandler } from './middleware/error.middleware';
 
 const app = express();
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/customers', customersRoutes);
 app.use('/api/invoices', invoicesRoutes);
+app.use('/api/transactions', transactionsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

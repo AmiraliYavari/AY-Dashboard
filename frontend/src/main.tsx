@@ -4,11 +4,14 @@ import { BrowserRouter } from 'react-router-dom';
 import './chartSetup';
 import './styles/style.css';
 import App from './App';
+import { ThemeProvider } from './context/ThemeContext';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ThemeProvider>
   </React.StrictMode>
 );

@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Invoices from './pages/Invoices';
 import Customers from './pages/Customers';
+import Transactions from './pages/Transactions';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/transactions" element={<Transactions />} />
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/customers" element={<Customers />} />
           </Route>

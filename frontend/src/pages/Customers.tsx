@@ -100,8 +100,9 @@ export default function Customers() {
           </button>
         </div>
 
-        <div className="card">
-          <table>
+        <div className="card flush">
+          <div className="table-scroll">
+          <table className="table-stack">
             <thead><tr><th>نام</th><th>شرکت</th><th>تماس</th><th>وضعیت</th><th></th></tr></thead>
             <tbody>
               {loading ? (
@@ -110,26 +111,27 @@ export default function Customers() {
                 <tr><td colSpan={5} className="empty-state">مشتری‌ای یافت نشد. یک مشتری جدید اضافه کنید.</td></tr>
               ) : customers.map((c) => (
                 <tr key={c.id}>
-                  <td><span className="avatar-mini">{c.name.charAt(0)}</span>{c.name}</td>
-                  <td>{c.company || '—'}</td>
-                  <td>{c.phone || c.email || '—'}</td>
-                  <td>
+                  <td className="cell-primary"><div className="cell-name"><span className="avatar-mini">{c.name.charAt(0)}</span>{c.name}</div></td>
+                  <td data-label="شرکت">{c.company || '—'}</td>
+                  <td data-label="تماس">{c.phone || c.email || '—'}</td>
+                  <td data-label="وضعیت">
                     <span className={`badge badge-${c.status === 'active' ? 'paid' : 'overdue'}`}>
                       {c.status === 'active' ? 'فعال' : 'غیرفعال'}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'left' }}>
-                    <button className="icon-btn" style={{ width: 30, height: 30 }} title="ویرایش" onClick={() => openModal(c)}>
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
+                  <td className="cell-actions">
+                    <button className="icon-btn sm" title="ویرایش" aria-label="ویرایش مشتری" onClick={() => openModal(c)}>
+                      <span className="material-symbols-outlined">edit</span>
                     </button>
-                    <button className="icon-btn" style={{ width: 30, height: 30 }} title="حذف" onClick={() => handleDelete(c.id)}>
-                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                    <button className="icon-btn sm danger" title="حذف" aria-label="حذف مشتری" onClick={() => handleDelete(c.id)}>
+                      <span className="material-symbols-outlined">delete</span>
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -138,7 +140,7 @@ export default function Customers() {
           <div className="modal">
             <div className="modal-head">
               <h3>{form.id !== '' ? 'ویرایش مشتری' : 'مشتری جدید'}</h3>
-              <button className="icon-btn" onClick={() => setModalOpen(false)}>
+              <button className="icon-btn" onClick={() => setModalOpen(false)} aria-label="بستن">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -167,7 +169,7 @@ export default function Customers() {
                 </select>
               </div>
               <div className="modal-actions">
-                <button type="submit" className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}>ذخیره</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>ذخیره</button>
                 <button type="button" className="btn btn-outline" onClick={() => setModalOpen(false)}>انصراف</button>
               </div>
             </form>

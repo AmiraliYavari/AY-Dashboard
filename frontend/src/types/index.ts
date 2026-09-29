@@ -94,3 +94,16 @@ export interface TopCustomer {
   company: string | null;
   total_billed: number;
 }
+
+export interface Transaction extends RecentTransaction {
+  customer_id: number | null;
+}
+
+export interface TransactionForm {
+  type: TransactionType;
+  category: string;
+  amount: string;
+  customer_id: string;
+  description: string;
+  txn_date: string;
+}
