@@ -30,12 +30,12 @@ export default function Topbar({ searchPlaceholder = 'جست‌وجو...', onSea
           <span className="material-symbols-outlined">notifications</span>
         </button>
         <button
-          className="icon-btn"
+          className="icon-btn theme-toggle"
           onClick={toggleTheme}
           aria-label={theme === 'dark' ? 'حالت روشن' : 'حالت تیره'}
           title={theme === 'dark' ? 'حالت روشن' : 'حالت تیره'}
         >
-          <span className="material-symbols-outlined">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+          <span key={theme} className="material-symbols-outlined theme-ico">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
         </button>
       </div>
     </header>

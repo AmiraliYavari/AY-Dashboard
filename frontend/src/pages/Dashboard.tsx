@@ -1,25 +1,62 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Chart, Doughnut, Line, PolarArea } from 'react-chartjs-2';
+import type { ScriptableContext, TooltipItem } from 'chart.js';
 import Topbar from '../components/Topbar';
 import Toast from '../components/Toast';
+import CandleChart from '../components/CandleChart';
 import { apiRequest } from '../api';
 import { formatToman, formatDate } from '../utils/format';
 import { useToast } from '../utils/useToast';
 import { useTheme } from '../context/ThemeContext';
 import type {
-  ApiError, CategoryPoint, DashboardSummary, RecentTransaction, TopCustomer, TrendPoint,
+  ApiError, CandlePoint, CategoryPoint, DashboardSummary, InvoiceStatusPoint, InvoiceStatusKey,
+  RecentTransaction, TopCustomer, TrendPoint,
 } from '../types';
 
 const CATEGORY_COLORS = ['#0e7c63', '#c08a2e', '#3a7ca5', '#8a6fbf', '#d6483f', '#16263d'];
 
 type Tone = 'revenue' | 'expense' | 'profit' | 'outstanding';
+type TrendMode = 'line' | 'bar' | 'combo';
+type CategoryMode = 'doughnut' | 'polar';
+
+const nf = new Intl.NumberFormat('fa-IR');
+const monthName = (ym: string) =>
+  new Intl.DateTimeFormat('fa-IR', { month: 'long' }).format(new Date(`${ym}-15T12:00:00`));
+
+const STATUS_META: Record<InvoiceStatusKey, { label: string; color: string; icon: string }> = {
+  paid: { label: 'پرداخت‌شده', color: 'var(--accent)', icon: 'task_alt' },
+  pending: { label: 'در انتظار', color: 'var(--gold)', icon: 'schedule' },
+  overdue: { label: 'معوق', color: 'var(--danger)', icon: 'error' },
+};
+const STATUS_HEX: Record<'light' | 'dark', Record<InvoiceStatusKey, string>> = {
+  light: { paid: '#0e7c63', pending: '#b8801f', overdue: '#d6483f' },
+  dark: { paid: '#23b28c', pending: '#e0a840', overdue: '#ef6a61' },
+};
+
+function areaGradient(ctx: ScriptableContext<'line'>, rgb: string) {
+  const { chart } = ctx;
+  const area = chart.chartArea;
+  if (!area) return `rgba(${rgb},0.12)`;
+  const g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+  g.addColorStop(0, `rgba(${rgb},0.34)`);
+  g.addColorStop(1, `rgba(${rgb},0)`);
+  return g;
+}
 
 export default function Dashboard() {
   const { message, showToast } = useToast();
   const { theme } = useTheme();
-  const tickColor = theme === 'dark' ? '#8b9bb3' : '#67748a';
-  const gridColor = theme === 'dark' ? '#1a2740' : '#edf0f5';
+  const dark = theme === 'dark';
+  const P = dark
+    ? { income: '#23b28c', incomeRgb: '35,178,140', expense: '#ef6a61', expenseRgb: '239,106,97', net: '#e0a840', tick: '#8b9bb3', grid: '#1a2740', tipBg: '#050a14', tipText: '#e7edf6', ring: '#111b2e' }
+    : { income: '#0e7c63', incomeRgb: '14,124,99', expense: '#d6483f', expenseRgb: '214,72,63', net: '#b8801f', tick: '#67748a', grid: '#edf0f5', tipBg: '#0d1727', tipText: '#ffffff', ring: '#ffffff' };
+  const tickColor = P.tick;
+  const gridColor = P.grid;
+  const [trendMode, setTrendMode] = useState<TrendMode>('line');
+  const [categoryMode, setCategoryMode] = useState<CategoryMode>('doughnut');
+  const [candles, setCandles] = useState<CandlePoint[]>([]);
+  const [invoiceStatus, setInvoiceStatus] = useState<InvoiceStatusPoint[]>([]);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [categories, setCategories] = useState<CategoryPoint[]>([]);
@@ -30,18 +67,22 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const [s, t, c, tx, tc] = await Promise.all([
+        const [s, t, c, tx, tc, cd, is] = await Promise.all([
           apiRequest<DashboardSummary>('/dashboard/summary'),
           apiRequest<TrendPoint[]>('/dashboard/revenue-trend'),
           apiRequest<CategoryPoint[]>('/dashboard/category-breakdown'),
           apiRequest<RecentTransaction[]>('/dashboard/recent-transactions'),
           apiRequest<TopCustomer[]>('/dashboard/top-customers'),
+          apiRequest<CandlePoint[]>('/dashboard/cashflow-candles').catch(() => [] as CandlePoint[]),
+          apiRequest<InvoiceStatusPoint[]>('/dashboard/invoice-status').catch(() => [] as InvoiceStatusPoint[]),
         ]);
         setSummary(s);
         setTrend(t);
         setCategories(c);
         setTransactions(tx);
         setTopCustomers(tc);
+        setCandles(cd);
+        setInvoiceStatus(is);
       } catch (err) {
         showToast((err as ApiError)?.message || 'خطا در دریافت اطلاعات داشبورد');
       } finally {
@@ -49,6 +90,45 @@ export default function Dashboard() {
       }
     })();
   }, [showToast]);
+
+  const font = { family: 'Vazirmatn' };
+  const legend = { position: 'bottom' as const, labels: { font, color: tickColor, usePointStyle: true, boxWidth: 8, padding: 16 } };
+  const moneyTip = {
+    rtl: true, backgroundColor: P.tipBg, titleColor: P.tipText, bodyColor: P.tipText,
+    padding: 11, cornerRadius: 10, boxPadding: 5, titleFont: { ...font, weight: 'bold' as const }, bodyFont: font,
+    callbacks: {
+      label: (c: TooltipItem<'line' | 'bar' | 'doughnut' | 'polarArea'>) =>
+        ` ${c.dataset.label ? c.dataset.label + ': ' : c.label ? c.label + ': ' : ''}${formatToman(c.raw as number)}`,
+    },
+  };
+  const axisScales = {
+    x: { ticks: { font, color: tickColor }, grid: { display: false }, border: { display: false } },
+    y: {
+      ticks: { font, color: tickColor, callback: (v: string | number) => nf.format(Number(v) / 1_000_000) },
+      grid: { color: gridColor }, border: { display: false },
+    },
+  };
+  const cartesianOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index' as const, intersect: false },
+    plugins: { legend, tooltip: moneyTip },
+    scales: axisScales,
+  };
+  const trendLabels = trend.map((r) => monthName(r.month));
+  const incomeSeries = trend.map((r) => r.income);
+  const expenseSeries = trend.map((r) => r.expense);
+  const netSeries = trend.map((r) => r.income - r.expense);
+  const barStyle = { borderRadius: 8, borderSkipped: false as const, maxBarThickness: 26 };
+  const dotStyle = (color: string) => ({
+    pointRadius: 3.5, pointHoverRadius: 6, pointBackgroundColor: P.ring, pointBorderColor: color, pointBorderWidth: 2, borderWidth: 2.5,
+  });
+
+  const paletteAlpha = (a: string) => CATEGORY_COLORS.map((c) => c + a);
+  const statusHex = STATUS_HEX[dark ? 'dark' : 'light'];
+  const statusTotalCount = invoiceStatus.reduce((n, r) => n + r.count, 0);
+  const statusOrder: InvoiceStatusKey[] = ['paid', 'pending', 'overdue'];
+  const statusRows = statusOrder.map((k) => invoiceStatus.find((r) => r.status === k) ?? { status: k, count: 0, total: 0 });
 
   const marginHint = summary && summary.revenue > 0
     ? `حاشیه سود ${new Intl.NumberFormat('fa-IR').format(Math.round((summary.netProfit / summary.revenue) * 100))}٪`
@@ -92,56 +172,151 @@ export default function Dashboard() {
             <div className="grid-2">
               <div className="card">
                 <div className="card-head">
-                  <div className="card-title">روند درآمد و هزینه (۶ ماه اخیر)</div>
-                  <span className="card-note">به تومان</span>
+                  <div>
+                    <div className="card-title">روند درآمد و هزینه (۶ ماه اخیر)</div>
+                    <span className="card-note">به میلیون تومان</span>
+                  </div>
+                  <div className="tab-group" role="tablist" aria-label="نوع نمودار">
+                    {([['line', 'show_chart', 'خطی'], ['bar', 'bar_chart', 'ستونی'], ['combo', 'stacked_line_chart', 'ترکیبی']] as const).map(([k, icon, label]) => (
+                      <button key={k} role="tab" aria-selected={trendMode === k} className={trendMode === k ? 'on' : ''} onClick={() => setTrendMode(k)}>
+                        <span className="material-symbols-outlined">{icon}</span><span className="tab-text">{label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="chart-box">
-                <Line
-                  data={{
-                    labels: trend.map((r) => r.month),
-                    datasets: [
-                      {
-                        label: 'درآمد', data: trend.map((r) => r.income),
-                        borderColor: '#0e7c63', backgroundColor: 'rgba(14,124,99,0.1)',
-                        tension: 0.35, fill: true, pointRadius: 3,
-                      },
-                      {
-                        label: 'هزینه', data: trend.map((r) => r.expense),
-                        borderColor: '#d6483f', backgroundColor: 'rgba(214,72,63,0.08)',
-                        tension: 0.35, fill: true, pointRadius: 3,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { position: 'bottom', labels: { font: { family: 'Vazirmatn' }, color: tickColor, usePointStyle: true, boxWidth: 8 } } },
-                    scales: {
-                      x: { ticks: { font: { family: 'Vazirmatn' }, color: tickColor }, grid: { display: false } },
-                      y: { ticks: { font: { family: 'Vazirmatn' }, color: tickColor }, grid: { color: gridColor } },
-                    },
-                  }}
-                />
+                  {trendMode === 'line' && (
+                    <Line
+                      data={{
+                        labels: trendLabels,
+                        datasets: [
+                          { label: 'درآمد', data: incomeSeries, borderColor: P.income, backgroundColor: (c) => areaGradient(c, P.incomeRgb), tension: 0.4, fill: true, ...dotStyle(P.income) },
+                          { label: 'هزینه', data: expenseSeries, borderColor: P.expense, backgroundColor: (c) => areaGradient(c, P.expenseRgb), tension: 0.4, fill: true, ...dotStyle(P.expense) },
+                        ],
+                      }}
+                      options={cartesianOptions}
+                    />
+                  )}
+                  {trendMode === 'bar' && (
+                    <Bar
+                      data={{
+                        labels: trendLabels,
+                        datasets: [
+                          { label: 'درآمد', data: incomeSeries, backgroundColor: P.income, ...barStyle },
+                          { label: 'هزینه', data: expenseSeries, backgroundColor: P.expense, ...barStyle },
+                        ],
+                      }}
+                      options={cartesianOptions}
+                    />
+                  )}
+                  {trendMode === 'combo' && (
+                    <Chart
+                      type="bar"
+                      data={{
+                        labels: trendLabels,
+                        datasets: [
+                          { type: 'bar' as const, label: 'درآمد', data: incomeSeries, backgroundColor: P.income + 'cc', ...barStyle },
+                          { type: 'bar' as const, label: 'هزینه', data: expenseSeries, backgroundColor: P.expense + 'cc', ...barStyle },
+                          { type: 'line' as const, label: 'سود خالص', data: netSeries, borderColor: P.net, backgroundColor: P.net, tension: 0.4, ...dotStyle(P.net) },
+                        ],
+                      }}
+                      options={cartesianOptions}
+                    />
+                  )}
                 </div>
               </div>
 
               <div className="card">
-                <div className="card-head"><div className="card-title">درآمد به تفکیک دسته</div></div>
-                <div className="chart-box donut">
-                <Doughnut
-                  data={{
-                    labels: categories.map((c) => c.category),
-                    datasets: [{ data: categories.map((c) => c.total), backgroundColor: CATEGORY_COLORS, borderWidth: 0, hoverOffset: 6 }],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { font: { family: 'Vazirmatn', size: 11 }, color: tickColor, usePointStyle: true, boxWidth: 8 } } },
-                    cutout: '66%',
-                  }}
-                />
+                <div className="card-head">
+                  <div className="card-title">درآمد به تفکیک دسته</div>
+                  <div className="tab-group" role="tablist" aria-label="نوع نمودار">
+                    <button role="tab" aria-selected={categoryMode === 'doughnut'} className={categoryMode === 'doughnut' ? 'on' : ''} onClick={() => setCategoryMode('doughnut')}>
+                      <span className="material-symbols-outlined">donut_large</span><span className="tab-text">دونات</span>
+                    </button>
+                    <button role="tab" aria-selected={categoryMode === 'polar'} className={categoryMode === 'polar' ? 'on' : ''} onClick={() => setCategoryMode('polar')}>
+                      <span className="material-symbols-outlined">radar</span><span className="tab-text">قطبی</span>
+                    </button>
+                  </div>
                 </div>
+                <div className="chart-box donut">
+                  {categoryMode === 'doughnut' ? (
+                    <Doughnut
+                      data={{
+                        labels: categories.map((c) => c.category),
+                        datasets: [{ data: categories.map((c) => c.total), backgroundColor: CATEGORY_COLORS, borderColor: P.ring, borderWidth: 3, hoverOffset: 8 }],
+                      }}
+                      options={{
+                        responsive: true, maintainAspectRatio: false, cutout: '68%',
+                        plugins: { legend: { ...legend, labels: { ...legend.labels, font: { ...font, size: 11 } } }, tooltip: moneyTip },
+                      }}
+                    />
+                  ) : (
+                    <PolarArea
+                      data={{
+                        labels: categories.map((c) => c.category),
+                        datasets: [{ data: categories.map((c) => c.total), backgroundColor: paletteAlpha('cc'), borderColor: CATEGORY_COLORS, borderWidth: 1.5 }],
+                      }}
+                      options={{
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { ...legend, labels: { ...legend.labels, font: { ...font, size: 11 } } }, tooltip: moneyTip },
+                        scales: { r: { ticks: { display: false }, grid: { color: gridColor }, angleLines: { color: gridColor } } },
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid-2">
+              <div className="card">
+                <div className="card-head">
+                  <div>
+                    <div className="card-title">نمودار کندل جریان نقدی (هفتگی)</div>
+                    <span className="card-note">موجودی خالص (درآمد − هزینه) · به میلیون تومان</span>
+                  </div>
+                  <div className="legend-inline">
+                    <span><i className="dot up" /> رشد موجودی</span>
+                    <span><i className="dot down" /> کاهش موجودی</span>
+                  </div>
+                </div>
+                <CandleChart data={candles} />
+              </div>
+
+              <div className="card">
+                <div className="card-head"><div className="card-title">وضعیت فاکتورها</div></div>
+                {statusTotalCount === 0 ? (
+                  <div className="empty-state">هنوز فاکتوری ثبت نشده است</div>
+                ) : (
+                  <>
+                    <div className="gauge-wrap">
+                      <div className="chart-box gauge">
+                        <Doughnut
+                          data={{
+                            labels: statusRows.map((r) => STATUS_META[r.status].label),
+                            datasets: [{ label: 'مبلغ', data: statusRows.map((r) => r.total), backgroundColor: statusRows.map((r) => statusHex[r.status]), borderColor: P.ring, borderWidth: 3, borderRadius: 6, hoverOffset: 6 }],
+                          }}
+                          options={{
+                            responsive: true, maintainAspectRatio: false, circumference: 180, rotation: -90, cutout: '74%',
+                            plugins: { legend: { display: false }, tooltip: moneyTip },
+                          }}
+                        />
+                      </div>
+                      <div className="gauge-center">
+                        <div className="figure gauge-num">{nf.format(statusTotalCount)}</div>
+                        <div className="gauge-cap">فاکتور</div>
+                      </div>
+                    </div>
+                    <ul className="status-list">
+                      {statusRows.map((r) => (
+                        <li key={r.status} style={{ ['--c' as string]: STATUS_META[r.status].color }}>
+                          <span className="status-ico"><span className="material-symbols-outlined">{STATUS_META[r.status].icon}</span></span>
+                          <span className="status-name">{STATUS_META[r.status].label}<small>{nf.format(r.count)} فاکتور</small></span>
+                          <b className="status-amt">{formatToman(r.total)}</b>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
               </div>
             </div>
 

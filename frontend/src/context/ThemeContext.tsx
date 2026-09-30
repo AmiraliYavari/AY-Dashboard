@@ -25,7 +25,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem('ay_theme', theme); } catch { /* ignore */ }
   }, [theme]);
 
-  const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
+  const toggleTheme = useCallback(() => {
+    // briefly enable colour transitions so the switch fades instead of snapping
+    const root = document.documentElement;
+    root.classList.add('theme-anim');
+    window.setTimeout(() => root.classList.remove('theme-anim'), 450);
+    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  }, []);
 
   return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }

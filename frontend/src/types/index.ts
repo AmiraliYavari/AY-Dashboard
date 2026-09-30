@@ -107,3 +107,21 @@ export interface TransactionForm {
   description: string;
   txn_date: string;
 }
+
+/** One candle = one week of cash-flow: balance at open / high / low / close. */
+export interface CandlePoint {
+  week: string;      // YYYY-MM-DD (Monday of the week)
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;    // total turnover (income + expense) in that week
+}
+
+export type InvoiceStatusKey = 'paid' | 'pending' | 'overdue';
+
+export interface InvoiceStatusPoint {
+  status: InvoiceStatusKey;
+  count: number;
+  total: number;
+}

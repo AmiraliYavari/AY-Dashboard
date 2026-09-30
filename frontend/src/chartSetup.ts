@@ -1,13 +1,4 @@
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
+import { Chart as ChartJS, registerables } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler);
+ChartJS.register(...registerables);
+ChartJS.defaults.font.family = "'Vazirmatn', Tahoma, sans-serif";

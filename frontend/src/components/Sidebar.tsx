@@ -1,11 +1,18 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
+import GradientWaves from './GradientWaves';
 
 const roleLabel: Record<string, string> = {
   admin: 'مدیر سیستم',
   manager: 'مدیر بخش',
   viewer: 'مشاهده‌گر',
+};
+
+const roleIcon: Record<string, string> = {
+  admin: 'verified_user',
+  manager: 'manage_accounts',
+  viewer: 'visibility',
 };
 
 const NAV = [
@@ -59,15 +66,44 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapse, onClo
           <span className="nav-text">جمع کردن منو</span>
         </button>
 
-        <div className="sidebar-user">
-          <div className="sidebar-user-avatar">{user?.name?.trim()?.charAt(0) || 'ک'}</div>
-          <div className="sidebar-user-meta">
-            <div className="sidebar-user-name">{user?.name || '—'}</div>
-            <div className="sidebar-user-role">{(user && roleLabel[user.role]) || user?.role || '—'}</div>
+        <div className="user-card">
+          <div className="user-card-bg" aria-hidden="true">
+            <GradientWaves
+              horizonColor="#0b1524"
+              waveColor="#0e7c63"
+              crestColor="#7ff0cf"
+              speed={0.3}
+              amplitude={2.2}
+              swell={30}
+              turbulence={18}
+              fogDepth={16}
+              detail="low"
+              brightness={1.05}
+              mouseInteraction={false}
+              grain={false}
+            />
           </div>
-          <button className="logout-btn" title="خروج" aria-label="خروج از حساب" onClick={logout}>
-            <span className="material-symbols-outlined">logout</span>
-          </button>
+
+          <div className="user-card-body">
+            <div className="user-id">
+              <div className="user-avatar">
+                {user?.name?.trim()?.charAt(0) || 'ک'}
+                <span className="user-status" title="آنلاین" />
+              </div>
+              <div className="user-meta">
+                <div className="user-name">{user?.name || '—'}</div>
+                <div className="user-role">
+                  <span className="material-symbols-outlined">{(user && roleIcon[user.role]) || 'person'}</span>
+                  {(user && roleLabel[user.role]) || user?.role || '—'}
+                </div>
+              </div>
+            </div>
+
+            <button className="user-logout" onClick={logout} title="خروج از حساب" aria-label="خروج از حساب">
+              <span className="material-symbols-outlined">logout</span>
+              <span className="user-logout-text">خروج از حساب</span>
+            </button>
+          </div>
         </div>
       </div>
     </aside>
