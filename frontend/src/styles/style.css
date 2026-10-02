@@ -307,7 +307,6 @@ img { max-width: 100%; }
 }
 .is-scrolled .topbar { border-bottom-color: var(--border); }
 
-.menu-btn { display: none; }
 
 .search-box {
   flex: 1; max-width: 420px;
@@ -338,8 +337,11 @@ img { max-width: 100%; }
 .icon-btn.sm .material-symbols-outlined { font-size: 17px; }
 .icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
 
+/* hamburger: only where the sidebar becomes an off-canvas drawer.
+   Must come after .icon-btn and be more specific than it (both set `display`). */
+.icon-btn.menu-btn { display: none; }
 @media (max-width: 900px) {
-  .menu-btn { display: flex; }
+  .icon-btn.menu-btn { display: flex; }
 }
 @media (max-width: 560px) {
   :root { --topbar-h: 62px; }
