@@ -69,9 +69,9 @@ export default function Sidebar({ collapsed, mobileOpen, onToggleCollapse, onClo
         <div className="user-card">
           <div className="user-card-bg" aria-hidden="true">
             <GradientWaves
-              horizonColor="#0b1524"
-              waveColor="#0e7c63"
-              crestColor="#7ff0cf"
+              horizonColor="#0b1226"
+              waveColor="#3f53a1"
+              crestColor="#a9b8ff"
               speed={0.3}
               amplitude={2.2}
               swell={30}

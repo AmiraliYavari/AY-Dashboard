@@ -16,7 +16,7 @@ import type {
   RecentTransaction, TopCustomer, TrendPoint,
 } from '../types';
 
-const CATEGORY_COLORS = ['#0e7c63', '#c08a2e', '#3a7ca5', '#8a6fbf', '#d6483f', '#16263d'];
+const CATEGORY_COLORS = ['#3f53a1', '#6f86e0', '#0e9f7e', '#c08a2e', '#d6483f', '#16263d'];
 
 type TrendMode = 'line' | 'bar' | 'combo';
 type CategoryMode = 'doughnut' | 'polar';
@@ -26,7 +26,7 @@ const monthName = (ym: string) =>
   new Intl.DateTimeFormat('fa-IR', { month: 'long' }).format(new Date(`${ym}-15T12:00:00`));
 
 const STATUS_META: Record<InvoiceStatusKey, { label: string; color: string; icon: string }> = {
-  paid: { label: 'پرداخت‌شده', color: 'var(--accent)', icon: 'task_alt' },
+  paid: { label: 'پرداخت‌شده', color: 'var(--success)', icon: 'task_alt' },
   pending: { label: 'در انتظار', color: 'var(--gold)', icon: 'schedule' },
   overdue: { label: 'معوق', color: 'var(--danger)', icon: 'error' },
 };
@@ -50,8 +50,8 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const dark = theme === 'dark';
   const P = dark
-    ? { income: '#23b28c', incomeRgb: '35,178,140', expense: '#ef6a61', expenseRgb: '239,106,97', net: '#e0a840', tick: '#8b9bb3', grid: '#1a2740', tipBg: '#050a14', tipText: '#e7edf6', ring: '#111b2e' }
-    : { income: '#0e7c63', incomeRgb: '14,124,99', expense: '#d6483f', expenseRgb: '214,72,63', net: '#b8801f', tick: '#67748a', grid: '#edf0f5', tipBg: '#0d1727', tipText: '#ffffff', ring: '#ffffff' };
+    ? { income: '#8ea1f2', incomeRgb: '142,161,242', expense: '#ef6a61', expenseRgb: '239,106,97', net: '#23b28c', tick: '#8b9bb3', grid: '#1a2740', tipBg: '#050a14', tipText: '#e7edf6', ring: '#111b2e' }
+    : { income: '#3f53a1', incomeRgb: '63,83,161', expense: '#d6483f', expenseRgb: '214,72,63', net: '#0e7c63', tick: '#67748a', grid: '#edf0f5', tipBg: '#0d1727', tipText: '#ffffff', ring: '#ffffff' };
   const tickColor = P.tick;
   const gridColor = P.grid;
   const [trendMode, setTrendMode] = useState<TrendMode>('line');
