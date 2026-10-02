@@ -6,6 +6,7 @@ import Topbar from '../components/Topbar';
 import Toast from '../components/Toast';
 import CandleChart from '../components/CandleChart';
 import KpiCard from '../components/KpiCard';
+import ClockCard from '../components/ClockCard';
 import { apiRequest } from '../api';
 import { formatToman, formatDate } from '../utils/format';
 import { useToast } from '../utils/useToast';
@@ -134,17 +135,17 @@ export default function Dashboard() {
   const marginHint = summary && summary.revenue > 0
     ? `حاشیه سود ${new Intl.NumberFormat('fa-IR').format(Math.round((summary.netProfit / summary.revenue) * 100))}٪`
     : 'حاشیه سود —';
-  const todayLabel = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date());
 
   return (
     <>
       <Topbar searchPlaceholder="جست‌وجوی فاکتور، مشتری، تراکنش..." />
       <div className="page">
-        <div className="page-head">
+        <div className="page-head page-head--clock">
           <div>
             <div className="page-title">نمای کلی مالی</div>
-            <div className="page-sub">{todayLabel}</div>
+            <div className="page-sub">خلاصه‌ی وضعیت فروش، هزینه و مطالبات</div>
           </div>
+          <ClockCard />
           <div className="page-actions">
             {summary && (
               <span className="chip">
