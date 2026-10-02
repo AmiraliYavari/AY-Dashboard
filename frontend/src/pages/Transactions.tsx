@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Topbar from '../components/Topbar';
 import Toast from '../components/Toast';
+import KpiCard from '../components/KpiCard';
 import { apiRequest } from '../api';
 import { formatToman, formatDate } from '../utils/format';
 import { useToast } from '../utils/useToast';
@@ -121,28 +122,9 @@ export default function Transactions() {
         </div>
 
         <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
-          <div className="kpi-card" data-tone="revenue">
-            <div className="kpi-top">
-              <div className="kpi-label">جمع دریافتی</div>
-              <div className="kpi-icon"><span className="material-symbols-outlined">south_west</span></div>
-            </div>
-            <div className="kpi-value figure">{formatToman(totals.income)}</div>
-          </div>
-          <div className="kpi-card" data-tone="expense">
-            <div className="kpi-top">
-              <div className="kpi-label">جمع پرداختی</div>
-              <div className="kpi-icon"><span className="material-symbols-outlined">north_east</span></div>
-            </div>
-            <div className="kpi-value figure">{formatToman(totals.expense)}</div>
-          </div>
-          <div className="kpi-card" data-tone="profit">
-            <div className="kpi-top">
-              <div className="kpi-label">تراز</div>
-              <div className="kpi-icon"><span className="material-symbols-outlined">balance</span></div>
-            </div>
-            <div className="kpi-value figure">{formatToman(totals.net)}</div>
-            <div className="kpi-hint">{fa(rows.length)} تراکنش در این نما</div>
-          </div>
+          <KpiCard tone="revenue" icon="south_west" label="جمع دریافتی" value={formatToman(totals.income)} />
+          <KpiCard tone="expense" icon="north_east" label="جمع پرداختی" value={formatToman(totals.expense)} />
+          <KpiCard tone="profit" icon="balance" label="تراز" value={formatToman(totals.net)} hint={`${fa(rows.length)} تراکنش در این نما`} />
         </div>
 
         <div className="toolbar">

@@ -5,6 +5,7 @@ import type { ScriptableContext, TooltipItem } from 'chart.js';
 import Topbar from '../components/Topbar';
 import Toast from '../components/Toast';
 import CandleChart from '../components/CandleChart';
+import KpiCard from '../components/KpiCard';
 import { apiRequest } from '../api';
 import { formatToman, formatDate } from '../utils/format';
 import { useToast } from '../utils/useToast';
@@ -16,7 +17,6 @@ import type {
 
 const CATEGORY_COLORS = ['#0e7c63', '#c08a2e', '#3a7ca5', '#8a6fbf', '#d6483f', '#16263d'];
 
-type Tone = 'revenue' | 'expense' | 'profit' | 'outstanding';
 type TrendMode = 'line' | 'bar' | 'combo';
 type CategoryMode = 'doughnut' | 'polar';
 
@@ -373,26 +373,5 @@ export default function Dashboard() {
       </div>
       <Toast message={message} />
     </>
-  );
-}
-
-interface KpiCardProps {
-  tone: Tone;
-  icon: string;
-  label: string;
-  value: string;
-  hint?: string;
-}
-
-function KpiCard({ tone, icon, label, value, hint }: KpiCardProps) {
-  return (
-    <div className="kpi-card" data-tone={tone}>
-      <div className="kpi-top">
-        <div className="kpi-label">{label}</div>
-        <div className="kpi-icon"><span className="material-symbols-outlined">{icon}</span></div>
-      </div>
-      <div className="kpi-value figure">{value}</div>
-      {hint && <div className="kpi-hint">{hint}</div>}
-    </div>
   );
 }
