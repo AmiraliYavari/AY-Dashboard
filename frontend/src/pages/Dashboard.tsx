@@ -141,11 +141,13 @@ export default function Dashboard() {
       <Topbar searchPlaceholder="جست‌وجوی فاکتور، مشتری، تراکنش..." />
       <div className="page">
         <div className="page-head page-head--clock">
-          <div>
-            <div className="page-title">نمای کلی مالی</div>
-            <div className="page-sub">خلاصه‌ی وضعیت فروش، هزینه و مطالبات</div>
+          <div className="page-head-main">
+            <ClockCard />
+            <div>
+              <div className="page-title">نمای کلی مالی</div>
+              <div className="page-sub">خلاصه‌ی وضعیت فروش، هزینه و مطالبات</div>
+            </div>
           </div>
-          <ClockCard />
           <div className="page-actions">
             {summary && (
               <span className="chip">
