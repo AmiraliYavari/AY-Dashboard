@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 /**
- * Brand logo. Loads /logo.svg from the /public folder.
- * To use your own logo, replace frontend/public/logo.svg (or change LOGO_SRC).
+ * Brand logo. Loads /logo.png from the /public folder.
+ * To use your own logo, replace frontend/public/logo.png (or change LOGO_SRC).
  */
-export const LOGO_SRC = '/logo.svg';
+export const LOGO_SRC = '/logo.png';
 
 interface LogoProps {
   size?: number;

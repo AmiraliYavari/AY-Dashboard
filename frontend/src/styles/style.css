@@ -92,7 +92,7 @@ html[data-theme='dark'] {
 
 * { box-sizing: border-box; }
 
-html { scroll-padding-top: calc(var(--topbar-h) + 12px); }
+html { scroll-padding-top: calc(var(--topbar-h) + 12px); overflow-x: clip; }
 
 html, body, #root {
   margin: 0;
@@ -149,7 +149,7 @@ img { max-width: 100%; }
 }
 .app-shell.is-collapsed { padding-inline-start: calc(var(--sb-w-collapsed) + var(--gap) * 2); }
 
-.main { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; min-height: 100dvh; }
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; min-height: 100dvh; overflow-x: clip; }
 
 /* ---------- Sidebar ---------- */
 .sidebar {
@@ -180,7 +180,11 @@ img { max-width: 100%; }
   padding: 2px 4px 0;
   min-height: 44px;
 }
-.logo-img { display: block; border-radius: 12px; flex-shrink: 0; }
+.logo-img {
+  display: block; flex-shrink: 0; object-fit: cover;
+  border-radius: 26%;
+  box-shadow: 0 6px 16px -6px rgba(63, 83, 161, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
 .logo-fallback {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   border-radius: 12px; color: #fff; font-family: 'Lalezar', sans-serif; font-size: 20px;
@@ -309,7 +313,7 @@ img { max-width: 100%; }
 
 
 .search-box {
-  flex: 1; max-width: 420px;
+  flex: 1; min-width: 0; max-width: 420px;
   display: flex; align-items: center; gap: 8px;
   height: 42px; padding: 0 14px;
   background: var(--surface); border: 1px solid var(--border);
@@ -319,7 +323,7 @@ img { max-width: 100%; }
 .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .search-box input {
   border: none; background: transparent; outline: none;
-  font-family: inherit; font-size: 13px; width: 100%; color: var(--text-primary);
+  font-family: inherit; font-size: 13px; width: 100%; min-width: 0; color: var(--text-primary);
 }
 .search-box input::placeholder { color: var(--text-secondary); opacity: 0.8; }
 .search-box input::-webkit-search-cancel-button { display: none; }
@@ -405,7 +409,7 @@ html[data-theme='dark'] .btn-primary:hover { background: var(--accent-strong); }
 
 /* colour orbs behind the cards: this is what the glass actually blurs */
 .kpi-grid::before {
-  content: ''; position: absolute; inset: -28px -20px; z-index: -1; pointer-events: none;
+  content: ''; position: absolute; inset: -28px 0; z-index: -1; pointer-events: none;
   background:
     radial-gradient(180px 120px at 10% 30%, rgba(14, 124, 99, 0.42), transparent 70%),
     radial-gradient(180px 120px at 36% 80%, rgba(214, 72, 63, 0.30), transparent 70%),
