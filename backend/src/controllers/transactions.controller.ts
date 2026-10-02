@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import pool from '../config/db';
+import { cleanText, isIsoDate, likePattern, toId, toPositiveNumber } from '../utils/validate';
 
 export async function list(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const type = req.query.type as string | undefined;
-    const search = (req.query.search as string | undefined)?.trim();
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
     const params: string[] = [];
     const where: string[] = [];
 
@@ -13,7 +14,7 @@ export async function list(req: Request, res: Response, next: NextFunction): Pro
       where.push(`t.type = $${params.length}`);
     }
     if (search) {
-      params.push(`%${search}%`);
+      params.push(likePattern(search));
       where.push(`(t.description ILIKE $${params.length} OR t.category ILIKE $${params.length} OR c.name ILIKE $${params.length})`);
     }
 
@@ -36,16 +37,19 @@ export async function create(req: Request, res: Response, next: NextFunction): P
   try {
     const { type, category, amount, customer_id, description, txn_date } = req.body as {
       type?: string; category?: string; amount?: number | string;
-      customer_id?: number | null; description?: string; txn_date?: string;
+      customer_id?: number | string | null; description?: string; txn_date?: string;
     };
-    if ((type !== 'income' && type !== 'expense') || !category || !amount || !txn_date) {
-      res.status(400).json({ message: 'نوع، دسته، مبلغ و تاریخ تراکنش الزامی است.' });
+    const cleanCategory = cleanText(category);
+    const cleanAmount = toPositiveNumber(amount);
+
+    if ((type !== 'income' && type !== 'expense') || !cleanCategory || !cleanAmount || !isIsoDate(txn_date)) {
+      res.status(400).json({ message: 'نوع، دسته، مبلغ و تاریخ معتبر برای تراکنش الزامی است.' });
       return;
     }
     const { rows } = await pool.query<{ id: number }>(
       `INSERT INTO transactions (type, category, amount, customer_id, description, txn_date)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [type, category, amount, customer_id || null, description || null, txn_date]
+      [type, cleanCategory, cleanAmount, toId(customer_id), cleanText(description), txn_date]
     );
     res.status(201).json({ id: rows[0].id });
   } catch (err) {
@@ -55,7 +59,16 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 
 export async function remove(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await pool.query(`DELETE FROM transactions WHERE id=$1`, [req.params.id]);
+    const id = toId(req.params.id);
+    if (!id) {
+      res.status(400).json({ message: 'شناسه تراکنش نامعتبر است.' });
+      return;
+    }
+    const result = await pool.query(`DELETE FROM transactions WHERE id=$1`, [id]);
+    if (result.rowCount === 0) {
+      res.status(404).json({ message: 'تراکنش یافت نشد.' });
+      return;
+    }
     res.json({ message: 'تراکنش حذف شد.' });
   } catch (err) {
     next(err);

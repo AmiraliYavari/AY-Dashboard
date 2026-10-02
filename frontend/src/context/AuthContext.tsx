@@ -12,6 +12,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('ay_token'));
   const [user, setUser] = useState<SessionUser | null>(() => {
     try {
       return JSON.parse(localStorage.getItem('ay_user') || 'null') as SessionUser | null;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await apiRequest<LoginResponse>('/auth/login', { method: 'POST', body: { email, password } });
     localStorage.setItem('ay_token', data.token);
     localStorage.setItem('ay_user', JSON.stringify(data.user));
+    setToken(data.token);
     setUser(data.user);
     return data.user;
   }, []);
@@ -31,10 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem('ay_token');
     localStorage.removeItem('ay_user');
+    setToken(null);
     setUser(null);
   }, []);
 
-  const isAuthenticated = Boolean(localStorage.getItem('ay_token'));
+  const isAuthenticated = Boolean(token);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>

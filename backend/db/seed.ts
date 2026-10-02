@@ -22,12 +22,15 @@ const categories = ['اشتراک نرم‌افزار', 'فروش محصول', '
 function randomDate(daysBack: number): string {
   const d = new Date();
   d.setDate(d.getDate() - Math.floor(Math.random() * daysBack));
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 async function seed(): Promise<void> {
   const client = await pool.connect();
+  let exitCode = 0;
   try {
+    await client.query('BEGIN');
+
     console.log('در حال درج کاربر مدیر...');
     await client.query(
       `INSERT INTO users (full_name, email, password_hash, role)
@@ -35,6 +38,15 @@ async function seed(): Promise<void> {
        ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name`,
       ['مدیر سیستم', ADMIN_EMAIL, ADMIN_PASSWORD_HASH]
     );
+
+    // Re-running the seed must not duplicate customers or violate the UNIQUE invoice_no constraint.
+    const existing = await client.query<{ count: string }>('SELECT COUNT(*) AS count FROM customers');
+    if (Number(existing.rows[0].count) > 0) {
+      await client.query('COMMIT');
+      console.log('ℹ️  داده‌های نمونه از قبل وجود دارد؛ فقط کاربر مدیر بررسی شد.');
+      console.log('   برای ساخت مجدد: docker compose down -v && docker compose up -d');
+      return;
+    }
 
     console.log('در حال درج مشتریان نمونه...');
     const customerIds: number[] = [];
@@ -54,7 +66,7 @@ async function seed(): Promise<void> {
       const issue = randomDate(90);
       await client.query(
         `INSERT INTO invoices (invoice_no, customer_id, amount, status, issue_date, due_date)
-         VALUES ($1, $2, $3, $4, $5, ($5::date + INTERVAL '14 days'))`,
+         VALUES ($1, $2, $3, $4, $5::date, ($5::date + INTERVAL '14 days'))`,
         [`INV-${1000 + i}`, custId, amount, statuses[Math.floor(Math.random() * statuses.length)], issue]
       );
     }
@@ -78,13 +90,17 @@ async function seed(): Promise<void> {
       );
     }
 
+    await client.query('COMMIT');
     console.log('✅ داده‌های نمونه با موفقیت درج شد.');
     console.log(`ورود با ایمیل: ${ADMIN_EMAIL}  |  رمز عبور: admin123`);
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
     console.error('❌ خطا در seed کردن دیتابیس:', (err as Error).message);
+    exitCode = 1;
   } finally {
     client.release();
-    process.exit(0);
+    await pool.end();
+    process.exit(exitCode);
   }
 }
 

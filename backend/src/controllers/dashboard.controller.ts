@@ -98,3 +98,86 @@ export async function topCustomers(req: Request, res: Response, next: NextFuncti
     next(err);
   }
 }
+
+const CANDLE_WEEKS = 16;
+
+function isoDate(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+/** Monday (UTC) of the week containing the given date. */
+function weekStart(d: Date): Date {
+  const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dow = (x.getUTCDay() + 6) % 7; // Monday = 0
+  x.setUTCDate(x.getUTCDate() - dow);
+  return x;
+}
+
+/**
+ * Weekly "candles" of the running cash balance (income - expense).
+ * open/close = balance at the start/end of the week, high/low = extremes of the daily balance.
+ */
+export async function cashflowCandles(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const now = new Date();
+    const firstWeek = weekStart(now);
+    firstWeek.setUTCDate(firstWeek.getUTCDate() - 7 * (CANDLE_WEEKS - 1));
+    const from = isoDate(firstWeek);
+
+    const openingRes = await pool.query(
+      `SELECT COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END), 0) AS balance
+       FROM transactions WHERE txn_date < $1`,
+      [from]
+    );
+    const dailyRes = await pool.query(
+      `SELECT to_char(txn_date, 'YYYY-MM-DD') AS day,
+              SUM(CASE WHEN type = 'income' THEN amount ELSE -amount END) AS net,
+              SUM(amount) AS volume
+       FROM transactions WHERE txn_date >= $1
+       GROUP BY txn_date ORDER BY txn_date ASC`,
+      [from]
+    );
+
+    const daily = new Map<string, { net: number; volume: number }>();
+    for (const r of dailyRes.rows) daily.set(r.day, { net: Number(r.net), volume: Number(r.volume) });
+
+    let balance = Number(openingRes.rows[0].balance);
+    const out: { week: string; open: number; high: number; low: number; close: number; volume: number }[] = [];
+
+    for (let w = 0; w < CANDLE_WEEKS; w++) {
+      const start = new Date(firstWeek);
+      start.setUTCDate(start.getUTCDate() + 7 * w);
+      const open = balance;
+      let high = balance;
+      let low = balance;
+      let volume = 0;
+      for (let d = 0; d < 7; d++) {
+        const day = new Date(start);
+        day.setUTCDate(day.getUTCDate() + d);
+        const row = daily.get(isoDate(day));
+        if (row) {
+          balance += row.net;
+          volume += row.volume;
+          high = Math.max(high, balance);
+          low = Math.min(low, balance);
+        }
+      }
+      out.push({ week: isoDate(start), open, high, low, close: balance, volume });
+    }
+    res.json(out);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function invoiceStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { rows } = await pool.query(
+      `SELECT status, COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total
+       FROM invoices GROUP BY status`
+    );
+    res.json(rows.map((r) => ({ status: r.status, count: Number(r.count), total: Number(r.total) })));
+  } catch (err) {
+    next(err);
+  }
+}

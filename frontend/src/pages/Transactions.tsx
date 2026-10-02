@@ -16,7 +16,11 @@ const FILTERS: { label: string; value: TypeFilter }[] = [
 
 const CATEGORIES = ['اشتراک نرم‌افزار', 'فروش محصول', 'خدمات مشاوره', 'اجاره دفتر', 'حقوق و دستمزد', 'تبلیغات'];
 
-const today = () => new Date().toISOString().slice(0, 10);
+// local calendar date (toISOString() is UTC and returns "yesterday" after midnight in UTC+3:30 / +4)
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 const emptyForm = (): TransactionForm => ({
   type: 'income', category: CATEGORIES[0], amount: '', customer_id: '', description: '', txn_date: today(),
 });

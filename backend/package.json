@@ -2,13 +2,14 @@
   "name": "ay-dashboard-backend",
   "version": "1.0.0",
   "description": "AY-Dashboard - Sales & Finance admin dashboard API (TypeScript)",
-  "main": "dist/server.js",
+  "main": "dist/src/server.js",
   "type": "commonjs",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
-    "seed": "tsx db/seed.ts"
+    "start": "node dist/src/server.js",
+    "seed": "tsx db/seed.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Bar, Chart, Doughnut, Line, PolarArea } from 'react-chartjs-2';
 import type { ScriptableContext, TooltipItem } from 'chart.js';
@@ -64,32 +64,33 @@ export default function Dashboard() {
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [s, t, c, tx, tc, cd, is] = await Promise.all([
-          apiRequest<DashboardSummary>('/dashboard/summary'),
-          apiRequest<TrendPoint[]>('/dashboard/revenue-trend'),
-          apiRequest<CategoryPoint[]>('/dashboard/category-breakdown'),
-          apiRequest<RecentTransaction[]>('/dashboard/recent-transactions'),
-          apiRequest<TopCustomer[]>('/dashboard/top-customers'),
-          apiRequest<CandlePoint[]>('/dashboard/cashflow-candles').catch(() => [] as CandlePoint[]),
-          apiRequest<InvoiceStatusPoint[]>('/dashboard/invoice-status').catch(() => [] as InvoiceStatusPoint[]),
-        ]);
-        setSummary(s);
-        setTrend(t);
-        setCategories(c);
-        setTransactions(tx);
-        setTopCustomers(tc);
-        setCandles(cd);
-        setInvoiceStatus(is);
-      } catch (err) {
-        showToast((err as ApiError)?.message || 'خطا در دریافت اطلاعات داشبورد');
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [s, t, c, tx, tc, cd, is] = await Promise.all([
+        apiRequest<DashboardSummary>('/dashboard/summary'),
+        apiRequest<TrendPoint[]>('/dashboard/revenue-trend'),
+        apiRequest<CategoryPoint[]>('/dashboard/category-breakdown'),
+        apiRequest<RecentTransaction[]>('/dashboard/recent-transactions'),
+        apiRequest<TopCustomer[]>('/dashboard/top-customers'),
+        apiRequest<CandlePoint[]>('/dashboard/cashflow-candles'),
+        apiRequest<InvoiceStatusPoint[]>('/dashboard/invoice-status'),
+      ]);
+      setSummary(s);
+      setTrend(t);
+      setCategories(c);
+      setTransactions(tx);
+      setTopCustomers(tc);
+      setCandles(cd);
+      setInvoiceStatus(is);
+    } catch (err) {
+      showToast((err as ApiError)?.message || 'خطا در دریافت اطلاعات داشبورد');
+    } finally {
+      setLoading(false);
+    }
   }, [showToast]);
+
+  useEffect(() => { load(); }, [load]);
 
   const font = { family: 'Vazirmatn' };
   const legend = { position: 'bottom' as const, labels: { font, color: tickColor, usePointStyle: true, boxWidth: 8, padding: 16 } };
@@ -151,7 +152,7 @@ export default function Dashboard() {
                 مشتریان فعال <b>{new Intl.NumberFormat('fa-IR').format(summary.activeCustomers)}</b>
               </span>
             )}
-            <button className="btn btn-outline" onClick={() => window.location.reload()}>
+            <button className="btn btn-outline" onClick={load} disabled={loading}>
               <span className="material-symbols-outlined">refresh</span>
               به‌روزرسانی
             </button>
@@ -308,7 +309,7 @@ export default function Dashboard() {
                     </div>
                     <ul className="status-list">
                       {statusRows.map((r) => (
-                        <li key={r.status} style={{ ['--c' as string]: STATUS_META[r.status].color }}>
+                        <li key={r.status} style={{ '--c': STATUS_META[r.status].color } as CSSProperties}>
                           <span className="status-ico"><span className="material-symbols-outlined">{STATUS_META[r.status].icon}</span></span>
                           <span className="status-name">{STATUS_META[r.status].label}<small>{nf.format(r.count)} فاکتور</small></span>
                           <b className="status-amt">{formatToman(r.total)}</b>
